@@ -1,18 +1,21 @@
 # CtrlGen Video Editor
 
-A video editing application built with Electron, React, TypeScript, and Python backend using gRPC for communication.
+A video editing application built with Electron, React, TypeScript, and Python FastAPI backend.
 
 ## Project Structure
 
 ```
 .
-├── backend/           # Python backend with gRPC
-│   ├── proto/        # gRPC service definitions
-│   └── main.py       # Backend server implementation
+├── backend/           # Python FastAPI backend
+│   ├── venv/         # Python virtual environment
+│   ├── requirements.txt  # Python dependencies
+│   └── main.py       # FastAPI server implementation
 ├── frontend/         # React frontend
 │   ├── src/          # Source files
 │   └── public/       # Static files
-└── electron/         # Electron main process
+├── electron/         # Electron main process
+├── dist/            # Production build output
+└── build/           # Development build output
 ```
 
 ## Prerequisites
@@ -25,18 +28,17 @@ A video editing application built with Electron, React, TypeScript, and Python b
 
 1. Install dependencies:
 ```bash
+# Install root dependencies
 npm install
+
+# Install frontend dependencies
 cd frontend && npm install
+
+# Setup Python backend
 cd ../backend
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
-```
-
-2. Generate gRPC stubs:
-```bash
-cd backend
-python -m grpc_tools.protoc -I./proto --python_out=. --grpc_python_out=. proto/video_service.proto
 ```
 
 ## Development
@@ -47,7 +49,7 @@ npm start
 ```
 
 This will:
-1. Start the Python backend server
+1. Start the FastAPI backend server
 2. Start the React development server
 3. Launch the Electron app
 
@@ -64,6 +66,6 @@ The packaged application will be available in the `dist` directory.
 ## Features
 
 - Modern UI with Tailwind CSS
-- Real-time communication between frontend and backend using gRPC
+- RESTful API with FastAPI backend
 - Cross-platform support through Electron
 - Type-safe development with TypeScript 
