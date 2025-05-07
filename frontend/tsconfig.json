@@ -18,10 +18,13 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx",
-    "types": ["node", "electron"]
+    "jsx": "preserve",
+    "types": [
+      "node",
+      "electron"
+    ]
   },
   "include": [
     "src"
   ]
-} 
+}

@@ -65,7 +65,7 @@ The packaged application will be available in the `dist` directory.
 
 ## Features
 
-- Modern UI with Tailwind CSS
+- Modern UI with MUI
 - RESTful API with FastAPI backend
 - Cross-platform support through Electron
 - Type-safe development with TypeScript 
