@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Box, IconButton, Typography, Paper } from '@mui/material';
+import React, { useState, useCallback } from 'react';
+import { Box, IconButton, Typography, Paper, Slider } from '@mui/material';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import TimeMarkers from './TimeMarkers';
@@ -27,6 +27,10 @@ const Timeline: React.FC<TimelineProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [zoom, setZoom] = useState(40); // pixels per second
 
+  const updateZoom = useCallback((newZoom: number) => {
+    setZoom(newZoom);
+  }, []);
+
   const handlePlayheadDrag = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isDragging) {
       const rect = e.currentTarget.getBoundingClientRect();
@@ -34,6 +38,19 @@ const Timeline: React.FC<TimelineProps> = ({
       const newTime = dragPosition / zoom;
       onTimeChange(Math.max(0, Math.min(duration, newTime)));
     }
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    // Only handle zoom when Ctrl/Cmd key is pressed
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const zoomFactor = e.deltaY > 0 ? 0.95 : 1.05;
+      updateZoom(Math.max(5, Math.min(400, zoom * zoomFactor)));
+    }
+  };
+
+  const handleZoomChange = (_event: Event, newValue: number | number[]) => {
+    updateZoom(newValue as number);
   };
 
   return (
@@ -54,27 +71,43 @@ const Timeline: React.FC<TimelineProps> = ({
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2, pt: 1 }}>
         <IconButton
           size="small"
-          onClick={() => setZoom((z) => Math.max(5, z / 1.25))}
+          onClick={() => updateZoom(Math.max(5, zoom / 1.1))}
           color="primary"
         >
           <ZoomOutIcon />
         </IconButton>
-        <Typography variant="caption" color="text.secondary">
-          Zoom
-        </Typography>
+        <Box sx={{ width: 200, mx: 2 }}>
+          <Slider
+            value={zoom}
+            onChange={handleZoomChange}
+            min={5}
+            max={400}
+            step={1}
+            aria-label="Zoom level"
+            size="small"
+          />
+        </Box>
         <IconButton
           size="small"
-          onClick={() => setZoom((z) => Math.min(400, z * 1.25))}
+          onClick={() => updateZoom(Math.min(400, zoom * 1.1))}
           color="primary"
         >
           <ZoomInIcon />
         </IconButton>
         <Typography variant="caption" color="text.secondary">
-          {zoom.toFixed(0)} px/s
+          {zoom} px/s
         </Typography>
       </Box>
-      <Box sx={{ overflowX: 'auto' }}>
-        <Box sx={{ minWidth: 'max-content', position: 'relative' }}>
+      <Box 
+        sx={{ 
+          overflowX: 'auto',
+        }}
+        onWheel={handleWheel}
+      >
+        <Box sx={{ 
+          minWidth: 'max-content', 
+          position: 'relative',
+        }}>
           <TrackArea
             duration={duration}
             currentTime={currentTime}

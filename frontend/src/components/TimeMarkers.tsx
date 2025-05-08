@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Box, Typography } from '@mui/material';
 
 interface TimeMarkersProps {
@@ -20,20 +20,61 @@ const TimeMarkers: React.FC<TimeMarkersProps> = ({
   isDragging,
   setIsDragging,
 }) => {
-  const timelineWidth = duration * zoom;
-  const playheadPosition = currentTime * zoom;
+  // Memoize calculations
+  const { timelineWidth, playheadPosition, markerInterval } = useMemo(() => ({
+    timelineWidth: duration * zoom,
+    playheadPosition: currentTime * zoom,
+    markerInterval: zoom < 10 ? 10 : zoom < 30 ? 5 : 1
+  }), [duration, zoom, currentTime]);
 
-  // Marker interval: more markers when zoomed in, fewer when zoomed out
-  let markerInterval = 1;
-  if (zoom < 30) markerInterval = 5;
-  if (zoom < 10) markerInterval = 10;
-
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const clickPosition = e.clientX - rect.left;
     const newTime = clickPosition / zoom;
     onTimeChange(Math.max(0, Math.min(duration, newTime)));
-  };
+  }, [zoom, duration, onTimeChange]);
+
+  const handleMouseDown = useCallback(() => {
+    setIsDragging(true);
+  }, [setIsDragging]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, [setIsDragging]);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsDragging(false);
+  }, [setIsDragging]);
+
+  // Memoize markers array
+  const markers = useMemo(() => 
+    Array.from({ length: Math.ceil(duration / markerInterval) + 1 }).map((_, i) => {
+      const time = i * markerInterval;
+      return (
+        <Box
+          key={time}
+          sx={{
+            position: 'absolute',
+            height: '100%',
+            borderLeft: 1,
+            borderColor: 'divider',
+            left: time * zoom,
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              color: 'text.secondary',
+              mt: -4,
+              display: 'block',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {time}s
+          </Typography>
+        </Box>
+      );
+    }), [duration, markerInterval, zoom]);
 
   return (
     <Box
@@ -44,40 +85,13 @@ const TimeMarkers: React.FC<TimeMarkersProps> = ({
         borderRadius: 1,
         width: timelineWidth,
       }}
-      onMouseDown={() => setIsDragging(true)}
-      onMouseUp={() => setIsDragging(false)}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
       onMouseMove={onPlayheadDrag}
-      onMouseLeave={() => setIsDragging(false)}
+      onMouseLeave={handleMouseLeave}
       onClick={handleClick}
     >
-      {/* Time markers */}
-      {Array.from({ length: Math.ceil(duration / markerInterval) + 1 }).map((_, i) => {
-        const time = i * markerInterval;
-        return (
-          <Box
-            key={time}
-            sx={{
-              position: 'absolute',
-              height: '100%',
-              borderLeft: 1,
-              borderColor: 'divider',
-              left: `${time * zoom}px`,
-            }}
-          >
-            <Typography
-              variant="caption"
-              sx={{
-                color: 'text.secondary',
-                mt: -4,
-                display: 'block',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {time}s
-            </Typography>
-          </Box>
-        );
-      })}
+      {markers}
       {/* Playhead dot */}
       <Box
         sx={{

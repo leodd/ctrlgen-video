@@ -24,7 +24,11 @@ const TrackArea: React.FC<TrackAreaProps> = ({
   const playheadPosition = currentTime * zoom;
 
   return (
-    <Box sx={{ position: 'relative', height: 64, width: timelineWidth }}>
+    <Box sx={{ 
+      position: 'relative', 
+      height: 64, 
+      width: timelineWidth
+    }}>
       {/* Playhead bar */}
       <Box
         sx={{
@@ -35,7 +39,8 @@ const TrackArea: React.FC<TrackAreaProps> = ({
           bgcolor: 'error.main',
           pointerEvents: 'none',
           zIndex: 10,
-          left: playheadPosition,
+          transform: 'translateX(-50%)',
+          left: playheadPosition
         }}
       />
       {/* Track */}
@@ -58,8 +63,8 @@ const TrackArea: React.FC<TrackAreaProps> = ({
               bgcolor: 'primary.main',
               borderRadius: 1,
               cursor: 'pointer',
-              left: `${clip.startTime * zoom}px`,
-              width: `${clip.duration * zoom}px`,
+              left: clip.startTime * zoom,
+              width: clip.duration * zoom,
             }}
           />
         ))}
