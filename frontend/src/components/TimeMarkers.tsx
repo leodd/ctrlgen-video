@@ -43,19 +43,37 @@ const TimeMarkers: React.FC<TimeMarkersProps> = ({
     ctx.font = '600 10px "Helvetica", "JetBrains Mono", "Roboto Mono", monospace';
     ctx.textBaseline = 'top';
 
-    // Calculate marker interval
-    const markerInterval = zoom < 10 ? 10 : zoom < 30 ? 5 : 1;
+    // Calculate marker interval based on zoom
+    const getTimeMarkerInterval = (pixelsPerSecond: number): number => {
+      const intervalThresholds = [
+        { threshold: 10, interval: 10 },  // Every 10 seconds when very zoomed out
+        { threshold: 30, interval: 5 },   // Every 5 seconds when zoomed out
+        { threshold: 60, interval: 2 },   // Every 2 seconds when moderately zoomed
+        { threshold: 120, interval: 1 },  // Every second when zoomed in
+        { threshold: Infinity, interval: 0.5 } // Every half second when very zoomed in
+      ];
+
+      return intervalThresholds.find(t => pixelsPerSecond < t.threshold)?.interval ?? 0.5;
+    };
+
+    const markerInterval = getTimeMarkerInterval(zoom);
     const numMarkers = Math.ceil(duration / markerInterval) + 1;
 
     // Calculate frame marker density based on zoom
-    const frameMarkerDensity = (() => {
-      const pixelsPerFrame = zoom / fps;
-      if (pixelsPerFrame < 2) return 0; // Don't show frame markers when zoomed out
-      if (pixelsPerFrame < 4) return 12; // Show every 12th frame
-      if (pixelsPerFrame < 8) return 6; // Show every 6th frame
-      if (pixelsPerFrame < 16) return 3; // Show every 3rd frame
-      return 1; // Show every frame when zoomed in close
-    })();
+    const getFrameMarkerDensity = (pixelsPerSecond: number): number => {
+      const densityThresholds = [
+        { threshold: 2, density: 0 },    // Don't show frame markers when zoomed out
+        { threshold: 4, density: 12 },   // Show every 12th frame
+        { threshold: 8, density: 6 },    // Show every 6th frame
+        { threshold: 16, density: 3 },   // Show every 3rd frame
+        { threshold: Infinity, density: 1 } // Show every frame when zoomed in close
+      ];
+
+      const pixelsPerFrame = pixelsPerSecond / fps;
+      return densityThresholds.find(t => pixelsPerFrame < t.threshold)?.density ?? 1;
+    };
+
+    const frameMarkerDensity = getFrameMarkerDensity(zoom);
 
     // Draw markers and labels
     for (let i = 0; i < numMarkers; i++) {
@@ -83,18 +101,19 @@ const TimeMarkers: React.FC<TimeMarkersProps> = ({
         }
       }
 
-      // Draw vertical line
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, canvas.height / dpr);
-      ctx.strokeStyle = colors.text.secondary;
-      ctx.stroke();
-
-      // Draw time label
-      const minutes = Math.floor(time / 60);
-      const seconds = Math.floor(time % 60);
-      const timeLabel = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-      ctx.fillText(timeLabel, x + 4, 4);
+      if (time % 1 === 0) {
+        // Draw vertical line
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height / dpr);
+        ctx.strokeStyle = colors.text.secondary;
+        ctx.stroke();
+        // Draw time label
+        const minutes = Math.floor(time / 60);
+        const seconds = Math.floor(time % 60);
+        const timeLabel = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        ctx.fillText(timeLabel, x + 4, 4);
+      }
     }
   }, [duration, zoom, theme.palette.divider, theme.palette.text.secondary, fps]);
 
