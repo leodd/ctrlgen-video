@@ -1,132 +1,97 @@
-import React, { useState, useCallback } from 'react';
-import { Box, IconButton, Typography, Paper, Slider } from '@mui/material';
-import ZoomInIcon from '@mui/icons-material/ZoomIn';
-import ZoomOutIcon from '@mui/icons-material/ZoomOut';
+import React, { useState, useCallback, useRef } from 'react';
+import { Box, Paper } from '@mui/material';
 import TimeMarkers from './TimeMarkers';
 import TrackArea from './TrackArea';
 
 interface Clip {
-  id: string;
-  startTime: number;
-  duration: number;
+    id: string;
+    startTime: number;
+    duration: number;
 }
 
 interface TimelineProps {
-  duration: number;
-  currentTime: number;
-  clips: Clip[];
-  onTimeChange: (time: number) => void;
+    duration: number;
+    currentTime: number;
+    clips: Clip[];
+    onTimeChange: (time: number) => void;
+    zoom: number;
+    onZoomChange: (newZoom: number) => void;
 }
 
 const Timeline: React.FC<TimelineProps> = ({
-  duration,
-  currentTime,
-  clips,
-  onTimeChange,
+    duration,
+    currentTime,
+    clips,
+    onTimeChange,
+    zoom,
+    onZoomChange,
 }) => {
-  const [isDragging, setIsDragging] = useState(false);
-  const [zoom, setZoom] = useState(40); // pixels per second
+    const [isDragging, setIsDragging] = useState(false);
 
-  const updateZoom = useCallback((newZoom: number) => {
-    setZoom(newZoom);
-  }, []);
+    // Store animation frame request ID and pending zoom value
+    const zoomRafId = useRef<number | null>(null);
+    const pendingZoom = useRef<number | null>(null);
 
-  const handlePlayheadDrag = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isDragging) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const dragPosition = e.clientX - rect.left;
-      const newTime = dragPosition / zoom;
-      onTimeChange(Math.max(0, Math.min(duration, newTime)));
-    }
-  };
+    // const requestZoomUpdate = (newZoom: number) => {
+    //     pendingZoom.current = newZoom;
+    //     if (zoomRafId.current === null) {
+    //         zoomRafId.current = requestAnimationFrame(() => {
+    //             if (pendingZoom.current !== null) {
+    //                 onZoomChange(pendingZoom.current);
+    //                 pendingZoom.current = null;
+    //             }
+    //             zoomRafId.current = null;
+    //         });
+    //     }
+    // };
 
-  const handleWheel = (e: React.WheelEvent) => {
-    // Only handle zoom when Ctrl/Cmd key is pressed
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      const zoomFactor = e.deltaY > 0 ? 0.95 : 1.05;
-      updateZoom(Math.max(5, Math.min(400, zoom * zoomFactor)));
-    }
-  };
+    // const handleWheel = useCallback((e: React.WheelEvent) => {
+    //     if (e.ctrlKey || e.metaKey) {
+    //         e.preventDefault();
+    //         const zoomFactor = e.deltaY > 0 ? 0.95 : 1.05;
+    //         const newZoom = Math.max(5, Math.min(400, zoom * zoomFactor));
+    //         requestZoomUpdate(newZoom);
+    //     }
+    // }, [zoom]);
 
-  const handleZoomChange = (_event: Event, newValue: number | number[]) => {
-    updateZoom(newValue as number);
-  };
+    const handlePlayheadDrag = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        if (isDragging) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const dragPosition = e.clientX - rect.left;
+            const newTime = dragPosition / zoom;
+            onTimeChange(Math.max(0, Math.min(duration, newTime)));
+        }
+    }, [isDragging, zoom, duration, onTimeChange]);
 
-  return (
-    <Paper
-      elevation={8}
-      sx={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        width: '100%',
-        zIndex: 30,
-        bgcolor: 'background.paper',
-        borderTop: 1,
-        borderColor: 'divider',
-      }}
-    >
-      {/* Zoom controls */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2, pt: 1 }}>
-        <IconButton
-          size="small"
-          onClick={() => updateZoom(Math.max(5, zoom / 1.1))}
-          color="primary"
+    return (
+        <Box
+            sx={{
+                overflowX: 'auto',
+                bgcolor: 'background.default',
+            }}
+            // onWheel={handleWheel}
         >
-          <ZoomOutIcon />
-        </IconButton>
-        <Box sx={{ width: 200, mx: 2 }}>
-          <Slider
-            value={zoom}
-            onChange={handleZoomChange}
-            min={5}
-            max={400}
-            step={1}
-            aria-label="Zoom level"
-            size="small"
-          />
+            <Box sx={{
+                minWidth: 'max-content',
+                position: 'relative',
+            }}>
+                <TrackArea
+                    duration={duration}
+                    currentTime={currentTime}
+                    zoom={zoom}
+                    clips={clips}
+                />
+                <TimeMarkers
+                    duration={duration}
+                    currentTime={currentTime}
+                    zoom={zoom}
+                    onTimeChange={onTimeChange}
+                    isDragging={isDragging}
+                    setIsDragging={setIsDragging}
+                />
+            </Box>
         </Box>
-        <IconButton
-          size="small"
-          onClick={() => updateZoom(Math.min(400, zoom * 1.1))}
-          color="primary"
-        >
-          <ZoomInIcon />
-        </IconButton>
-        <Typography variant="caption" color="text.secondary">
-          {zoom} px/s
-        </Typography>
-      </Box>
-      <Box 
-        sx={{ 
-          overflowX: 'auto',
-        }}
-        onWheel={handleWheel}
-      >
-        <Box sx={{ 
-          minWidth: 'max-content', 
-          position: 'relative',
-        }}>
-          <TrackArea
-            duration={duration}
-            currentTime={currentTime}
-            zoom={zoom}
-            clips={clips}
-          />
-          <TimeMarkers
-            duration={duration}
-            currentTime={currentTime}
-            zoom={zoom}
-            onTimeChange={onTimeChange}
-            onPlayheadDrag={handlePlayheadDrag}
-            isDragging={isDragging}
-            setIsDragging={setIsDragging}
-          />
-        </Box>
-      </Box>
-    </Paper>
-  );
+    );
 };
 
-export default Timeline; 
+export default Timeline;

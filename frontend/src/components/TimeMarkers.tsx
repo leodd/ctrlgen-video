@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useEffect, useRef } from 'react';
 import { Box, Typography } from '@mui/material';
 
 interface TimeMarkersProps {
@@ -6,7 +6,6 @@ interface TimeMarkersProps {
   currentTime: number;
   zoom: number; // pixels per second
   onTimeChange: (time: number) => void;
-  onPlayheadDrag: (e: React.MouseEvent<HTMLDivElement>) => void;
   isDragging: boolean;
   setIsDragging: (drag: boolean) => void;
 }
@@ -16,10 +15,11 @@ const TimeMarkers: React.FC<TimeMarkersProps> = ({
   currentTime,
   zoom,
   onTimeChange,
-  onPlayheadDrag,
   isDragging,
   setIsDragging,
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
   // Memoize calculations
   const { timelineWidth, playheadPosition, markerInterval } = useMemo(() => ({
     timelineWidth: duration * zoom,
@@ -42,9 +42,25 @@ const TimeMarkers: React.FC<TimeMarkersProps> = ({
     setIsDragging(false);
   }, [setIsDragging]);
 
-  const handleMouseLeave = useCallback(() => {
-    setIsDragging(false);
-  }, [setIsDragging]);
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (isDragging && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const dragPosition = e.clientX - rect.left;
+      const newTime = dragPosition / zoom;
+      onTimeChange(Math.max(0, Math.min(duration, newTime)));
+    }
+  }, [isDragging, zoom, duration, onTimeChange]);
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   // Memoize markers array
   const markers = useMemo(() => 
@@ -59,6 +75,10 @@ const TimeMarkers: React.FC<TimeMarkersProps> = ({
             borderLeft: 1,
             borderColor: 'divider',
             left: time * zoom,
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            MozUserSelect: 'none',
+            msUserSelect: 'none',
           }}
         >
           <Typography
@@ -68,6 +88,10 @@ const TimeMarkers: React.FC<TimeMarkersProps> = ({
               mt: -4,
               display: 'block',
               whiteSpace: 'nowrap',
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
+              MozUserSelect: 'none',
+              msUserSelect: 'none',
             }}
           >
             {time}s
@@ -78,17 +102,19 @@ const TimeMarkers: React.FC<TimeMarkersProps> = ({
 
   return (
     <Box
+      ref={containerRef}
       sx={{
         position: 'relative',
         height: 32,
         bgcolor: 'background.default',
         borderRadius: 1,
         width: timelineWidth,
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        MozUserSelect: 'none',
+        msUserSelect: 'none',
       }}
       onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseMove={onPlayheadDrag}
-      onMouseLeave={handleMouseLeave}
       onClick={handleClick}
     >
       {markers}

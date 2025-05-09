@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Box, Typography, Paper, Button, Stack } from '@mui/material';
 import VideoPlayer from '../components/VideoPlayer';
 import Timeline from '../components/Timeline';
+import ZoomControls from '../components/ZoomControls';
 
 const VideoEditor: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [zoom, setZoom] = useState(40);
   const [clips, setClips] = useState([
     {
       id: '1',
@@ -21,6 +23,10 @@ const VideoEditor: React.FC = () => {
 
   const handleTimeChange = (time: number) => {
     setCurrentTime(time);
+  };
+
+  const handleZoomChange = (newZoom: number) => {
+    setZoom(newZoom);
   };
 
   return (
@@ -78,13 +84,38 @@ const VideoEditor: React.FC = () => {
         </Paper>
       </Box>
 
-      {/* Timeline fixed at bottom, full width */}
-      <Timeline
-        duration={duration || 30}
-        currentTime={currentTime}
-        clips={clips}
-        onTimeChange={handleTimeChange}
-      />
+      {/* Fixed Bottom Controls */}
+      <Box
+        sx={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          width: '100%',
+          zIndex: 30,
+        }}
+      >
+        {/* Zoom Controls */}
+        <Paper
+          elevation={8}
+          sx={{
+            bgcolor: 'background.paper',
+            borderTop: 1,
+            borderColor: 'divider',
+          }}
+        >
+          <ZoomControls zoom={zoom} onZoomChange={handleZoomChange} />
+        </Paper>
+
+        {/* Timeline */}
+        <Timeline
+          duration={duration || 30}
+          currentTime={currentTime}
+          clips={clips}
+          onTimeChange={handleTimeChange}
+          zoom={zoom}
+          onZoomChange={handleZoomChange}
+        />
+      </Box>
     </Box>
   );
 };
