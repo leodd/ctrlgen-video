@@ -94,6 +94,15 @@ const VideoEditor: React.FC = () => {
           zIndex: 30,
         }}
       >
+        {/* Timeline */}
+        <Timeline
+          duration={duration || 30}
+          currentTime={currentTime}
+          clips={clips}
+          onTimeChange={handleTimeChange}
+          zoom={zoom}
+          onZoomChange={handleZoomChange}
+        />
         {/* Zoom Controls */}
         <Paper
           elevation={8}
@@ -105,16 +114,6 @@ const VideoEditor: React.FC = () => {
         >
           <ZoomControls zoom={zoom} onZoomChange={handleZoomChange} />
         </Paper>
-
-        {/* Timeline */}
-        <Timeline
-          duration={duration || 30}
-          currentTime={currentTime}
-          clips={clips}
-          onTimeChange={handleTimeChange}
-          zoom={zoom}
-          onZoomChange={handleZoomChange}
-        />
       </Box>
     </Box>
   );

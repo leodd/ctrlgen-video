@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box } from '@mui/material';
+import { colors } from '../styles/colors';
 
 interface Clip {
   id: string;
@@ -9,19 +10,16 @@ interface Clip {
 
 interface TrackAreaProps {
   duration: number;
-  currentTime: number;
   zoom: number;
   clips: Clip[];
 }
 
 const TrackArea: React.FC<TrackAreaProps> = ({
   duration,
-  currentTime,
   zoom,
   clips,
 }) => {
   const timelineWidth = duration * zoom;
-  const playheadPosition = currentTime * zoom;
 
   return (
     <Box sx={{ 
@@ -29,26 +27,12 @@ const TrackArea: React.FC<TrackAreaProps> = ({
       height: 64, 
       width: timelineWidth
     }}>
-      {/* Playhead bar */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 0,
-          bottom: 0,
-          width: 2,
-          bgcolor: 'error.main',
-          pointerEvents: 'none',
-          zIndex: 10,
-          transform: 'translateX(-50%)',
-          left: playheadPosition
-        }}
-      />
       {/* Track */}
       <Box
         sx={{
           position: 'absolute',
           inset: 0,
-          bgcolor: 'background.default',
+          bgcolor: colors.background.dark,
           borderRadius: 1,
         }}
       >
@@ -60,7 +44,7 @@ const TrackArea: React.FC<TrackAreaProps> = ({
               position: 'absolute',
               height: 48,
               top: 8,
-              bgcolor: 'primary.main',
+              bgcolor: colors.primary.main,
               borderRadius: 1,
               cursor: 'pointer',
               left: clip.startTime * zoom,
@@ -73,4 +57,4 @@ const TrackArea: React.FC<TrackAreaProps> = ({
   );
 };
 
-export default TrackArea; 
+export default React.memo(TrackArea); 

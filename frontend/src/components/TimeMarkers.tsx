@@ -1,66 +1,27 @@
-import React, { useCallback, useMemo, useEffect, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { Box, Typography } from '@mui/material';
+import { colors } from '../styles/colors';
 
 interface TimeMarkersProps {
   duration: number;
-  currentTime: number;
   zoom: number; // pixels per second
-  onTimeChange: (time: number) => void;
-  isDragging: boolean;
-  setIsDragging: (drag: boolean) => void;
 }
+
+const formatTime = (time: number) => {
+  const minutes = Math.floor(time / 60);
+  const seconds = Math.floor(time % 60);
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+};
 
 const TimeMarkers: React.FC<TimeMarkersProps> = ({
   duration,
-  currentTime,
   zoom,
-  onTimeChange,
-  isDragging,
-  setIsDragging,
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-
   // Memoize calculations
-  const { timelineWidth, playheadPosition, markerInterval } = useMemo(() => ({
+  const { timelineWidth, markerInterval } = useMemo(() => ({
     timelineWidth: duration * zoom,
-    playheadPosition: currentTime * zoom,
     markerInterval: zoom < 10 ? 10 : zoom < 30 ? 5 : 1
-  }), [duration, zoom, currentTime]);
-
-  const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickPosition = e.clientX - rect.left;
-    const newTime = clickPosition / zoom;
-    onTimeChange(Math.max(0, Math.min(duration, newTime)));
-  }, [zoom, duration, onTimeChange]);
-
-  const handleMouseDown = useCallback(() => {
-    setIsDragging(true);
-  }, [setIsDragging]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, [setIsDragging]);
-
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (isDragging && containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const dragPosition = e.clientX - rect.left;
-      const newTime = dragPosition / zoom;
-      onTimeChange(Math.max(0, Math.min(duration, newTime)));
-    }
-  }, [isDragging, zoom, duration, onTimeChange]);
-
-  useEffect(() => {
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-    }
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }), [duration, zoom]);
 
   // Memoize markers array
   const markers = useMemo(() => 
@@ -79,13 +40,15 @@ const TimeMarkers: React.FC<TimeMarkersProps> = ({
             WebkitUserSelect: 'none',
             MozUserSelect: 'none',
             msUserSelect: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
           }}
         >
           <Typography
             variant="caption"
             sx={{
               color: 'text.secondary',
-              mt: -4,
               display: 'block',
               whiteSpace: 'nowrap',
               userSelect: 'none',
@@ -94,47 +57,28 @@ const TimeMarkers: React.FC<TimeMarkersProps> = ({
               msUserSelect: 'none',
             }}
           >
-            {time}s
+            {formatTime(time)}
           </Typography>
         </Box>
       );
-    }), [duration, markerInterval, zoom]);
+    }), [markerInterval, duration,zoom]);
 
   return (
     <Box
-      ref={containerRef}
       sx={{
         position: 'relative',
-        height: 32,
-        bgcolor: 'background.default',
-        borderRadius: 1,
+        height: 18,
+        bgcolor: colors.background.dark,
         width: timelineWidth,
         userSelect: 'none',
         WebkitUserSelect: 'none',
         MozUserSelect: 'none',
         msUserSelect: 'none',
       }}
-      onMouseDown={handleMouseDown}
-      onClick={handleClick}
     >
       {markers}
-      {/* Playhead dot */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: -4,
-          width: 12,
-          height: 12,
-          bgcolor: 'error.main',
-          borderRadius: '50%',
-          pointerEvents: 'none',
-          transform: 'translateX(-50%)',
-          zIndex: 20,
-          left: playheadPosition,
-        }}
-      />
     </Box>
   );
 };
 
-export default TimeMarkers; 
+export default React.memo(TimeMarkers); 

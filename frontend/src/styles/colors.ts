@@ -56,6 +56,11 @@ export const colors = {
     main: '#2196f3',
     dark: '#1976d2',
   },
+  mint: {
+    light: '#36ffb5',
+    main: '#36ffb5',
+    dark: '#2ce0a0',
+  },
   
   // Background colors
   background: {
