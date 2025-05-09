@@ -7,12 +7,6 @@ interface TimeMarkersProps {
   zoom: number; // pixels per second
 }
 
-const formatTime = (time: number) => {
-  const minutes = Math.floor(time / 60);
-  const seconds = Math.floor(time % 60);
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-};
-
 const TimeMarkers: React.FC<TimeMarkersProps> = ({
   duration,
   zoom,
@@ -23,6 +17,12 @@ const TimeMarkers: React.FC<TimeMarkersProps> = ({
     markerInterval: zoom < 10 ? 10 : zoom < 30 ? 5 : 1
   }), [duration, zoom]);
 
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
   // Memoize markers array
   const markers = useMemo(() => 
     Array.from({ length: Math.ceil(duration / markerInterval) + 1 }).map((_, i) => {
@@ -31,11 +31,9 @@ const TimeMarkers: React.FC<TimeMarkersProps> = ({
         <Box
           key={time}
           sx={{
-            position: 'absolute',
             height: '100%',
             borderLeft: 1,
             borderColor: 'divider',
-            left: time * zoom,
             userSelect: 'none',
             WebkitUserSelect: 'none',
             MozUserSelect: 'none',
@@ -61,7 +59,7 @@ const TimeMarkers: React.FC<TimeMarkersProps> = ({
           </Typography>
         </Box>
       );
-    }), [markerInterval, duration,zoom]);
+    }), [markerInterval, formatTime]);
 
   return (
     <Box
@@ -74,6 +72,8 @@ const TimeMarkers: React.FC<TimeMarkersProps> = ({
         WebkitUserSelect: 'none',
         MozUserSelect: 'none',
         msUserSelect: 'none',
+        display: 'flex',
+        justifyContent: 'space-between',
       }}
     >
       {markers}
@@ -81,4 +81,4 @@ const TimeMarkers: React.FC<TimeMarkersProps> = ({
   );
 };
 
-export default React.memo(TimeMarkers); 
+export default TimeMarkers; 
