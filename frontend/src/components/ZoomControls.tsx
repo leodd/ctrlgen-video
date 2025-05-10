@@ -41,7 +41,7 @@ const ZoomControls: React.FC<ZoomControlsProps> = ({ zoom, onZoomChange }) => {
         <ZoomInIcon />
       </IconButton>
       <Typography variant="caption" color="text.secondary">
-        {zoom} px/s
+        {zoom.toFixed(0)} px/s
       </Typography>
     </Box>
   );

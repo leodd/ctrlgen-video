@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box } from '@mui/material';
+import { Box, SxProps, Theme } from '@mui/material';
 import { colors } from '../styles/colors';
 
 interface Clip {
@@ -12,12 +12,14 @@ interface TrackAreaProps {
   duration: number;
   zoom: number;
   clips: Clip[];
+  sx?: SxProps<Theme>;
 }
 
 const TrackArea: React.FC<TrackAreaProps> = ({
   duration,
   zoom,
   clips,
+  sx,
 }) => {
   const timelineWidth = duration * zoom;
 
@@ -25,7 +27,8 @@ const TrackArea: React.FC<TrackAreaProps> = ({
     <Box sx={{ 
       position: 'relative', 
       height: 64, 
-      width: timelineWidth
+      width: timelineWidth,
+      ...sx
     }}>
       {/* Track */}
       <Box

@@ -46,21 +46,35 @@ const Timeline: React.FC<TimelineProps> = ({
     );
 
     const bindDrag = useDrag(
-        ({ event, xy: [x, y], active }) => {
+        ({ event, movement: [mx], first, active, memo = null, xy: [x, y], last }) => {
             event.preventDefault();
-            if (containerRef.current) {
-                const rect = containerRef.current.getBoundingClientRect();
-                // Check if click is within scrollbar area (bottom 8px of the container)
-                const isScrollbarClick = y > rect.bottom - 8;
-                if (isScrollbarClick) {
-                    return;
-                }
+            if (!containerRef.current) return;
+
+            const rect = containerRef.current.getBoundingClientRect();
+            const scrollLeft = containerRef.current.scrollLeft;
+
+            if (first) {
+                // TimeMarkers is 18px height at the bottom
+                const isTimeMarkersClick = y - rect.top > rect.height - 18;
+                const isPlayheadClick = Math.abs(x - (playheadPosition + rect.left - scrollLeft)) < 10; // 10px threshold for playhead
+                const mode = isTimeMarkersClick || isPlayheadClick ? 'playhead' : 'scroll';
+                console.log('mode', mode);
+                return { mode, startX: x, initialScroll: scrollLeft };
+            }
+
+            if (!memo) return;
+            const { mode, startX, initialScroll } = memo;
+
+            if (mode === 'playhead') {
                 setIsDragging(active);
-                const scrollLeft = containerRef.current.scrollLeft;
                 const relativeX = x - rect.left + scrollLeft;
                 const newTime = relativeX / zoom;
                 onTimeChange(Math.max(0, Math.min(duration, newTime)));
+            } else if (mode === 'scroll') {
+                containerRef.current.scrollLeft = initialScroll - (x - startX);
             }
+
+            return memo;
         },
         {
             pointer: { touch: true },
@@ -76,57 +90,58 @@ const Timeline: React.FC<TimelineProps> = ({
             {...bindPinch()}
             {...bindDrag()}
             sx={{
-                overflowX: 'scroll',
+                overflowX: 'auto',
                 overflowY: 'hidden',
                 bgcolor: colors.background.dark,
                 touchAction: 'none',
                 position: 'relative',
-                '&::-webkit-scrollbar': {
-                    height: '8px',
-                    width: '0px',
-                    backgroundColor: colors.background.dark,
-                },
-                '&::-webkit-scrollbar-thumb': {
-                    backgroundColor: colors.neutral.darkest,
-                    borderRadius: '4px',
-                    '&:hover': {
-                        backgroundColor: colors.neutral.dark,
-                    },
-                },
-                '&::-webkit-scrollbar-track': {
-                    backgroundColor: colors.background.dark,
-                },
+                scrollbarWidth: 'none',  /* Firefox */
+                msOverflowStyle: 'none',  /* IE and Edge */
+                '&::-webkit-scrollbar': {  /* Chrome, Safari and Opera */
+                    display: 'none'
+                }
             }}
         >
             <Box sx={{
-                minWidth: 'max-content',
                 position: 'relative',
             }}>
                 <TrackArea
                     duration={duration}
                     zoom={zoom}
                     clips={clips}
+                    sx={{
+                        cursor: 'grab',
+                        '&:active': {
+                            cursor: 'grabbing'
+                        }
+                    }}
                 />
                 <TimeMarkers
                     duration={duration}
                     zoom={zoom}
+                    sx={{
+                        cursor: 'pointer'
+                    }}
+                    data-time-markers
                 />
                 {/* Playhead */}
                 <Box
+                    data-playhead
                     sx={{
                         position: 'absolute',
                         top: 0,
                         bottom: 16,
                         width: 2,
                         bgcolor: colors.mint.main,
-                        pointerEvents: 'none',
                         zIndex: 20,
                         transform: 'translateX(-50%)',
                         left: playheadPosition,
+                        cursor: 'ew-resize',
                     }}
                 />
                 {/* Playhead handle */}
                 <Box
+                    data-playhead
                     sx={{
                         position: 'absolute',
                         width: 10,
@@ -134,13 +149,13 @@ const Timeline: React.FC<TimelineProps> = ({
                         border: '2px solid',
                         borderColor: colors.mint.main,
                         bgcolor: isDragging ? colors.mint.main : 'none',
-                        pointerEvents: 'none',
                         borderRadius: '6px 6px 2px 2px',
                         transform: 'translateX(-50%)',
                         zIndex: 30,
                         bottom: 0,
                         left: playheadPosition,
                         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                        cursor: 'ew-resize',
                     }}
                 />
             </Box>

@@ -3,6 +3,7 @@ import { Box, Typography, Paper, Button, Stack } from '@mui/material';
 import VideoPlayer from '../components/VideoPlayer';
 import Timeline from '../components/Timeline';
 import ZoomControls from '../components/ZoomControls';
+import { colors } from '../styles/colors';
 
 const VideoEditor: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(0);
@@ -96,7 +97,7 @@ const VideoEditor: React.FC = () => {
       >
         {/* Timeline */}
         <Timeline
-          duration={duration || 30}
+          duration={duration || 20}
           currentTime={currentTime}
           clips={clips}
           onTimeChange={handleTimeChange}
@@ -104,16 +105,15 @@ const VideoEditor: React.FC = () => {
           onZoomChange={handleZoomChange}
         />
         {/* Zoom Controls */}
-        <Paper
-          elevation={8}
+        <Box
           sx={{
-            bgcolor: 'background.paper',
+            bgcolor: colors.neutral.black,
             borderTop: 1,
-            borderColor: 'divider',
+            borderColor: colors.neutral.darkest,
           }}
         >
           <ZoomControls zoom={zoom} onZoomChange={handleZoomChange} />
-        </Paper>
+        </Box>
       </Box>
     </Box>
   );

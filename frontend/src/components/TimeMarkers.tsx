@@ -1,17 +1,19 @@
 import React, { useEffect, useRef } from 'react';
-import { Box, useTheme } from '@mui/material';
+import { Box, useTheme, SxProps, Theme } from '@mui/material';
 import { colors } from '../styles/colors';
 
 interface TimeMarkersProps {
   duration: number;
   zoom: number; // pixels per second
   fps?: number; // frames per second, default to 30
+  sx?: SxProps<Theme>;
 }
 
 const TimeMarkers: React.FC<TimeMarkersProps> = ({
   duration,
   zoom,
   fps = 30,
+  sx,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const theme = useTheme();
@@ -128,6 +130,7 @@ const TimeMarkers: React.FC<TimeMarkersProps> = ({
         WebkitUserSelect: 'none',
         MozUserSelect: 'none',
         msUserSelect: 'none',
+        ...sx
       }}
     >
       <canvas
