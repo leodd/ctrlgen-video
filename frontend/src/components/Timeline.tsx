@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState, useEffect } from 'react';
+import React, { useCallback, useRef, useState, useLayoutEffect } from 'react';
 import { Box, Paper } from '@mui/material';
 import { usePinch, useDrag } from '@use-gesture/react';
 import TimeMarkers from './TimeMarkers';
@@ -31,8 +31,9 @@ const Timeline: React.FC<TimelineProps> = ({
     const [isDragging, setIsDragging] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const playheadX = useRef(Math.floor(currentTime * zoom));
+    const prevZoomRef = useRef(zoom);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (!containerRef.current) return;
         
         const container = containerRef.current;
@@ -46,11 +47,15 @@ const Timeline: React.FC<TimelineProps> = ({
     }, [zoom]);
 
     const bindPinch = usePinch(
-        ({ movement: [scale], memo, last }) => {
-            const initialZoom = memo ?? zoom;
-            const newZoom = Math.max(5, Math.min(400, initialZoom * scale));
+        ({ movement: [scale], first, last }) => {
+            if (first) {
+                prevZoomRef.current = zoom;
+            }
+            const newZoom = Math.max(5, Math.min(400, prevZoomRef.current * scale));
             onZoomChange(newZoom);
-            return last ? undefined : initialZoom;
+            if (last) {
+                prevZoomRef.current = newZoom;
+            }
         },
         {
             pointer: { touch: true },
