@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { Box, Paper } from '@mui/material';
 import { usePinch, useDrag } from '@use-gesture/react';
 import TimeMarkers from './TimeMarkers';
@@ -30,6 +30,20 @@ const Timeline: React.FC<TimelineProps> = ({
 }) => {
     const [isDragging, setIsDragging] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    const playheadX = useRef(Math.floor(currentTime * zoom));
+
+    useEffect(() => {
+        if (!containerRef.current) return;
+        
+        const container = containerRef.current;
+        
+        // Calculate the playhead's position relative to the viewport
+        const playheadViewportOffset = Math.floor(playheadX.current - container.scrollLeft);
+        
+        // Calculate new scroll position to maintain the same viewport offset
+        playheadX.current = currentTime * zoom;
+        container.scrollLeft = Math.floor(playheadX.current - playheadViewportOffset);
+    }, [zoom]);
 
     const bindPinch = usePinch(
         ({ movement: [scale], memo, last }) => {
@@ -39,7 +53,6 @@ const Timeline: React.FC<TimelineProps> = ({
             return last ? undefined : initialZoom;
         },
         {
-            rubberband: true,
             pointer: { touch: true },
             scaleBounds: { min: 0.1, max: 4 },
         }
@@ -106,11 +119,13 @@ const Timeline: React.FC<TimelineProps> = ({
                 msOverflowStyle: 'none',  /* IE and Edge */
                 '&::-webkit-scrollbar': {  /* Chrome, Safari and Opera */
                     display: 'none'
-                }
+                },
             }}
         >
             <Box sx={{
                 position: 'relative',
+                width: duration * zoom,
+                overflow: 'hidden',
             }}>
                 <TrackArea
                     duration={duration}
