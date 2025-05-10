@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState, useLayoutEffect } from 'react';
+import React, { useCallback, useRef, useState, useLayoutEffect, useEffect } from 'react';
 import { Box, Paper } from '@mui/material';
 import { usePinch, useDrag } from '@use-gesture/react';
 import TimeMarkers from './TimeMarkers';
@@ -30,51 +30,39 @@ const Timeline: React.FC<TimelineProps> = ({
 }) => {
     const [isDragging, setIsDragging] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
-    const playheadX = useRef(Math.floor(currentTime * zoom));
-    const prevZoomRef = useRef(zoom);
+    const playheadZoomRef = useRef(zoom);
+    const pinchZoomRef = useRef(zoom);
+    const currentTimeRef = useRef(currentTime);
+
+    useEffect(() => {
+        currentTimeRef.current = currentTime;
+    }, [currentTime]);
 
     useLayoutEffect(() => {
         if (!containerRef.current) return;
         
         const container = containerRef.current;
-        
-        // Calculate the playhead's position relative to the viewport
-        const playheadViewportOffset = Math.floor(playheadX.current - container.scrollLeft);
-        
         // Calculate new scroll position to maintain the same viewport offset
-        playheadX.current = currentTime * zoom;
-        container.scrollLeft = Math.floor(playheadX.current - playheadViewportOffset);
+        container.scrollLeft += currentTimeRef.current * (zoom - playheadZoomRef.current);
+        playheadZoomRef.current = zoom;
     }, [zoom]);
 
-    const bindPinch = usePinch(
-        ({ movement: [scale], first, last }) => {
+    usePinch(
+        ({ movement: [scale], first }) => {
             if (first) {
-                prevZoomRef.current = zoom;
+                pinchZoomRef.current = zoom;
             }
-            const newZoom = Math.max(5, Math.min(400, prevZoomRef.current * scale));
-            onZoomChange(newZoom);
-            if (last) {
-                prevZoomRef.current = newZoom;
-            }
+            onZoomChange(Math.max(5, Math.min(400, pinchZoomRef.current * scale)));
         },
         {
+            target: containerRef,
+            eventOptions: { passive: false },
             pointer: { touch: true },
-            scaleBounds: { min: 0.1, max: 4 },
         }
     );
 
-    const handleTimeMarkersClick = (event: React.MouseEvent) => {
-        if (!containerRef.current) return;
-        const rect = containerRef.current.getBoundingClientRect();
-        const scrollLeft = containerRef.current.scrollLeft;
-        const x = event.clientX;
-        const relativeX = x - rect.left + scrollLeft;
-        const newTime = relativeX / zoom;
-        onTimeChange(Math.max(0, Math.min(duration, newTime)));
-    };
-
-    const bindDrag = useDrag(
-        ({ event, movement: [mx], first, active, memo = null, xy: [x, y], last }) => {
+    useDrag(
+        ({ event, first, active, memo = null, xy: [x] }) => {
             event.preventDefault();
             if (!containerRef.current) return;
 
@@ -102,18 +90,28 @@ const Timeline: React.FC<TimelineProps> = ({
             return memo;
         },
         {
+            target: containerRef,
+            eventOptions: { passive: false },
             pointer: { touch: true },
             filterTaps: true,
         }
     );
+
+    const handleTimeMarkersClick = (event: React.MouseEvent) => {
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        const scrollLeft = containerRef.current.scrollLeft;
+        const x = event.clientX;
+        const relativeX = x - rect.left + scrollLeft;
+        const newTime = relativeX / zoom;
+        onTimeChange(Math.max(0, Math.min(duration, newTime)));
+    };
 
     const playheadPosition = currentTime * zoom;
 
     return (
         <Box
             ref={containerRef}
-            {...bindPinch()}
-            {...bindDrag()}
             sx={{
                 overflowX: 'auto',
                 overflowY: 'hidden',
@@ -190,4 +188,4 @@ const Timeline: React.FC<TimelineProps> = ({
     );
 };
 
-export default React.memo(Timeline);
+export default Timeline;
