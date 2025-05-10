@@ -7,6 +7,7 @@ interface TimeMarkersProps {
   zoom: number; // pixels per second
   fps?: number; // frames per second, default to 30
   sx?: SxProps<Theme>;
+  onClick?: (event: React.MouseEvent) => void;
 }
 
 const TimeMarkers: React.FC<TimeMarkersProps> = ({
@@ -14,6 +15,7 @@ const TimeMarkers: React.FC<TimeMarkersProps> = ({
   zoom,
   fps = 30,
   sx,
+  onClick,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const theme = useTheme();
@@ -121,6 +123,7 @@ const TimeMarkers: React.FC<TimeMarkersProps> = ({
 
   return (
     <Box
+      onClick={onClick}
       sx={{
         position: 'relative',
         height: 18,

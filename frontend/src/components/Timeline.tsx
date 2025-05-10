@@ -45,6 +45,16 @@ const Timeline: React.FC<TimelineProps> = ({
         }
     );
 
+    const handleTimeMarkersClick = (event: React.MouseEvent) => {
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        const scrollLeft = containerRef.current.scrollLeft;
+        const x = event.clientX;
+        const relativeX = x - rect.left + scrollLeft;
+        const newTime = relativeX / zoom;
+        onTimeChange(Math.max(0, Math.min(duration, newTime)));
+    };
+
     const bindDrag = useDrag(
         ({ event, movement: [mx], first, active, memo = null, xy: [x, y], last }) => {
             event.preventDefault();
@@ -54,11 +64,8 @@ const Timeline: React.FC<TimelineProps> = ({
             const scrollLeft = containerRef.current.scrollLeft;
 
             if (first) {
-                // TimeMarkers is 18px height at the bottom
-                const isTimeMarkersClick = y - rect.top > rect.height - 18;
                 const isPlayheadClick = Math.abs(x - (playheadPosition + rect.left - scrollLeft)) < 10; // 10px threshold for playhead
-                const mode = isTimeMarkersClick || isPlayheadClick ? 'playhead' : 'scroll';
-                console.log('mode', mode);
+                const mode = isPlayheadClick ? 'playhead' : 'scroll';
                 return { mode, startX: x, initialScroll: scrollLeft };
             }
 
@@ -122,7 +129,7 @@ const Timeline: React.FC<TimelineProps> = ({
                     sx={{
                         cursor: 'pointer'
                     }}
-                    data-time-markers
+                    onClick={handleTimeMarkersClick}
                 />
                 {/* Playhead */}
                 <Box
