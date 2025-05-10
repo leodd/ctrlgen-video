@@ -98,8 +98,8 @@ const TimeMarkers: React.FC<TimeMarkersProps> = ({
           
           // Draw shorter line for frame marker
           ctx.beginPath();
-          ctx.moveTo(frameX, 0);
-          ctx.lineTo(frameX, (canvas.height / dpr) / 2);
+          ctx.moveTo(frameX, (canvas.height / dpr) / 2);
+          ctx.lineTo(frameX, (canvas.height / dpr));
           ctx.strokeStyle = colors.neutral.darkest;
           ctx.stroke();
         }

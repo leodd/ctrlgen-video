@@ -13,6 +13,8 @@ interface TrackAreaProps {
   zoom: number;
   clips: Clip[];
   sx?: SxProps<Theme>;
+  onClipClick?: (clipId: string) => void;
+  selectedClipId?: string;
 }
 
 const TrackArea: React.FC<TrackAreaProps> = ({
@@ -20,6 +22,8 @@ const TrackArea: React.FC<TrackAreaProps> = ({
   zoom,
   clips,
   sx,
+  onClipClick,
+  selectedClipId,
 }) => {
   const timelineWidth = duration * zoom;
 
@@ -43,15 +47,23 @@ const TrackArea: React.FC<TrackAreaProps> = ({
         {clips.map((clip) => (
           <Box
             key={clip.id}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClipClick?.(clip.id);
+            }}
             sx={{
               position: 'absolute',
               height: 48,
               top: 8,
-              bgcolor: colors.primary.main,
+              bgcolor: selectedClipId === clip.id ? colors.primary.light : colors.primary.main,
               borderRadius: 1,
               cursor: 'pointer',
               left: clip.startTime * zoom,
               width: clip.duration * zoom,
+              transition: 'background-color 0.2s',
+              '&:hover': {
+                bgcolor: colors.primary.light,
+              }
             }}
           />
         ))}
